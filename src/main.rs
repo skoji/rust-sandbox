@@ -1,22 +1,27 @@
 use std::{cell::RefCell, rc::Rc};
 
-type SingleLink = Option<Rc<RefCell<Node>>>;
+type Link = Option<Rc<RefCell<Node>>>;
 
 #[derive(Clone)]
 struct Node {
     value: String,
-    next: SingleLink,
+    prev: Link,
+    next: Link,
 }
 
 impl Node {
     fn new(value: String) -> Rc<RefCell<Node>> {
-        Rc::new(RefCell::new(Node { value, next: None }))
+        Rc::new(RefCell::new(Node {
+            value,
+            prev: None,
+            next: None,
+        }))
     }
 }
 
 struct MyLog {
-    head: SingleLink,
-    tail: SingleLink,
+    head: Link,
+    tail: Link,
     pub length: u64,
 }
 
@@ -28,10 +33,12 @@ impl MyLog {
             length: 0,
         }
     }
+
     pub fn append(&mut self, value: String) {
         let new = Node::new(value);
         match self.tail.take() {
             Some(tail) => {
+                new.borrow_mut().prev = Some(tail.clone());
                 tail.borrow_mut().next = Some(new.clone());
             }
             None => {
@@ -46,6 +53,7 @@ impl MyLog {
         self.head.take().map(|head| {
             match head.borrow_mut().next.take() {
                 Some(next) => {
+                    next.borrow_mut().prev.take();
                     self.head = Some(next);
                 }
                 None => {
@@ -73,7 +81,7 @@ fn main() {
     mylog.append("first".to_string());
     mylog.append("second".to_string());
     mylog.append("third".to_string());
-    while let Some(log) = mylog.pop() {
+    if let Some(log) = mylog.pop() {
         println!("{}", log);
     }
 }
