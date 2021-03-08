@@ -106,13 +106,31 @@ impl Iterator for LinkIterator {
     }
 }
 
+impl DoubleEndedIterator for LinkIterator {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        let current = &self.current;
+        let mut result = None;
+        self.current = match current {
+            Some(current) => {
+                let current = current.borrow();
+                result = Some(current.value.clone());
+                current.prev.clone()
+            }
+            None => None,
+        };
+        result
+    }
+}
+
 fn main() {
     let mut mylog = MyLog::new_empty();
     mylog.append("first".to_string());
     mylog.append("second".to_string());
     mylog.append("third".to_string());
-    let iter = LinkIterator::new(&mylog);
-    for v in iter {
-        println!("{}", v);
-    }
+    let mut iter = LinkIterator::new(&mylog);
+
+    println!("{}", iter.next().unwrap());
+    println!("{}", iter.next().unwrap());
+    println!("{}", iter.next_back().unwrap());
+    println!("{}", iter.next_back().unwrap());
 }
