@@ -76,12 +76,43 @@ impl Drop for MyLog {
     }
 }
 
+pub struct LinkIterator {
+    current: Link,
+}
+
+impl LinkIterator {
+    fn new(target: &MyLog) -> LinkIterator {
+        LinkIterator {
+            current: target.head.clone(),
+        }
+    }
+}
+
+impl Iterator for LinkIterator {
+    type Item = String;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let current = &self.current;
+        let mut result = None;
+        self.current = match current {
+            Some(current) => {
+                let current = current.borrow();
+                result = Some(current.value.clone());
+                current.next.clone()
+            }
+            None => None,
+        };
+        result
+    }
+}
+
 fn main() {
     let mut mylog = MyLog::new_empty();
     mylog.append("first".to_string());
     mylog.append("second".to_string());
     mylog.append("third".to_string());
-    if let Some(log) = mylog.pop() {
-        println!("{}", log);
+    let iter = LinkIterator::new(&mylog);
+    for v in iter {
+        println!("{}", v);
     }
 }
